@@ -5,14 +5,20 @@ import flask
 app = flask.Flask(__name__)
 
 
-@app.route('/')
-def index():
-    return 'Hello, World!'
+@app.route('/new/account', methods=('POST', ))
+def handle_create_account():
+    """
+    Creates new account.
+    """
+    raise RuntimeError('not yet')
 
 
-@app.route('/about')
-def about():
-    return 'Hello, About!'
+@app.route('/accounts/<uuid:account_id>', methods=('GET', ))
+def handle_retrieve_account(account_id):
+    """
+    Returns account with given ID.
+    """
+    return account_id
 
 
 if __name__ == '__main__':
