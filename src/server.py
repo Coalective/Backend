@@ -31,7 +31,7 @@ def search_file(fn):
                 response=user_data,
                 mimetype='application/json',
             )
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             return flask.Response(
                 response=json.dumps({'error': 'User does not exist'}),
                 status=404,
@@ -106,7 +106,7 @@ class Account(dict):
     def check_user_input_name(cls, deserialized_json):
         # Check if user try to create existing one.
         name = deserialized_json['name']
-        if os.path.exists(name + '.json'):
+        if os.path.exists(f'{name}.json'):
             raise ValidationError(f'User "{name}" already exists.')
 
     @classmethod
@@ -168,8 +168,9 @@ def handle_create_account():
     Creates new account.
     """
     user_data_json = User.from_json(flask.request.data).__dict__
-    file = open(user_data_json['name'] + '.json', 'w')
-    file.write(json.dumps(user_data_json))
+    name = user_data_json['name']
+    with open(f'{name}.json', 'w') as file:
+        file.write(json.dumps(user_data_json))
     return user_data_json
 
 
@@ -179,7 +180,7 @@ def handle_retrieve_account(name):
     """
     Returns account with given name.
     """
-    file = open(name + '.json', 'r')
+    file = open(f'{name}.json', 'r')
     return file.read()
 
 
