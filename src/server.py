@@ -160,6 +160,28 @@ class User(Account):
             image=valid_dict.get('image'),
         )
 
+class MailingList(Account):
+
+    FIELDS = (
+        'name'
+        'image'
+        'contacts'
+    )
+
+    REQUIRED_FIELDS = (
+        'contacts'
+    )
+
+    def __init__(self, name, image='', contacts=None):
+        super().__init__(name, account_type='2', image=image, contacts=contacts)
+
+    @classmethod
+    def from_valid_dict(cls, valid_dict):
+        return cls(
+            name=valid_dict.get('name'),
+            contacts=valid_dict.get('contacts'),
+            image=valid_dict.get('image')
+        )
 
 @app.route('/new/user', methods=('POST', ))
 @json_response
@@ -183,6 +205,10 @@ def handle_retrieve_account(name):
     file = open(f'{name}.json', 'r')
     return file.read()
 
+@app.route('/new/mailing_list', methods=('POST', ))
+@json_response
+def handle_create_account():
+    return MailingList.from_json(flask.request.data).__dict__
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
