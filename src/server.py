@@ -179,6 +179,9 @@ class MailingList(Account):
         if not contacts:
             raise ValidationError(f'Invalid contacts value: {contacts}')
 
+        if not name:
+            name = 'no_name'
+
         super().__init__(name, account_type='2', image=image, contacts=contacts)
 
     @classmethod
