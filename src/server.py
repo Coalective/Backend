@@ -1,4 +1,5 @@
 # coding: utf-8
+import functools
 import json
 import os
 import flask
@@ -7,6 +8,7 @@ app = flask.Flask(__name__)
 
 
 def json_response(fn):
+    @functools.wraps(fn)
     def _wrapper(*args, **kwargs):
         try:
             response_data = fn(*args, **kwargs)
@@ -160,19 +162,23 @@ class User(Account):
             image=valid_dict.get('image'),
         )
 
+
 class MailingList(Account):
 
     FIELDS = (
-        'name'
-        'image'
-        'contacts'
+        'name',
+        'image',
+        'contacts',
     )
 
     REQUIRED_FIELDS = (
-        'contacts'
+        'contacts',
     )
 
-    def __init__(self, name, image='', contacts=None):
+    def __init__(self, name='', image='', contacts=None):
+        if not contacts:
+            raise ValidationError(f'Invalid contacts value: {contacts}')
+
         super().__init__(name, account_type='2', image=image, contacts=contacts)
 
     @classmethod
@@ -183,9 +189,10 @@ class MailingList(Account):
             image=valid_dict.get('image')
         )
 
+
 @app.route('/new/user', methods=('POST', ))
 @json_response
-def handle_create_account():
+def handle_create_user():
     """
     Creates new account.
     """
@@ -198,17 +205,19 @@ def handle_create_account():
 
 @app.route('/accounts/<string:name>', methods=('GET', ))
 @search_file
-def handle_retrieve_account(name):
+def handle_retrieve_user(name):
     """
     Returns account with given name.
     """
     file = open(f'{name}.json', 'r')
     return file.read()
 
+
 @app.route('/new/mailing_list', methods=('POST', ))
 @json_response
-def handle_create_account():
+def handle_create_mailing_list():
     return MailingList.from_json(flask.request.data).__dict__
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
