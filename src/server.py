@@ -162,6 +162,21 @@ class User(Account):
             image=valid_dict.get('image'),
         )
 
+class Room(Account):
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+    )
+
+    REQUIRED_FIELDS = (
+        'name',
+    )
+
+    def __init__(self, name, image='', contacts=None):
+        super().__init__(name, account_type='2', image=image, contacts=contacts)
+
 
 class MailingList(Account):
 
@@ -182,7 +197,7 @@ class MailingList(Account):
         if not name:
             name = 'no_name'
 
-        super().__init__(name, account_type='2', image=image, contacts=contacts)
+        super().__init__(name, account_type='3', image=image, contacts=contacts)
 
     @classmethod
     def from_valid_dict(cls, valid_dict):
@@ -214,6 +229,12 @@ def handle_retrieve_user(name):
     """
     file = open(f'{name}.json', 'r')
     return file.read()
+
+
+@app.route('/new/room', methods=('POST',))
+@json_response
+def handle_create_room():
+    return Room.from_json(flask.request.data).__dict__
 
 
 @app.route('/new/mailing_list', methods=('POST', ))
