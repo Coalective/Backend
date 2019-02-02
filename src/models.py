@@ -15,14 +15,16 @@ class Account(dict):
         'type',
         'image',
         'contacts',
+        'login',
     )
 
     REQUIRED_FIELDS = (
         'name',
         'type',
+        'login',
     )
 
-    def __init__(self, name, account_type, image='', contacts=None,):
+    def __init__(self, name, login, account_type, image='', contacts=None,):
         super().__init__()
 
         if not isinstance(name, str):
@@ -33,6 +35,7 @@ class Account(dict):
 
         self.contacts = contacts
         self.name = name
+        self.login = login
         self.type = account_type
         self.image = image
 
@@ -104,19 +107,22 @@ class User(Account):
         'name',
         'image',
         'contacts',
+        'login',
     )
 
     REQUIRED_FIELDS = (
         'name',
+        'login',
     )
 
-    def __init__(self, name, image='', contacts=None):
-        super().__init__(name, account_type='1', image=image, contacts=contacts)
+    def __init__(self, name, login, image='', contacts=None):
+        super().__init__(name, login, account_type='1', image=image, contacts=contacts)
 
     @classmethod
     def from_valid_dict(cls, valid_dict):
         return cls(
             name=valid_dict.get('name'),
+            login=valid_dict.get('login'),
             contacts=valid_dict.get('contacts'),
             image=valid_dict.get('image'),
         )
@@ -128,10 +134,12 @@ class Room(Account):
         'name',
         'image',
         'contacts',
+        'login',
     )
 
     REQUIRED_FIELDS = (
         'name',
+        'login',
     )
 
     def __init__(self, name, image='', contacts=None):
@@ -144,10 +152,12 @@ class MailingList(Account):
         'name',
         'image',
         'contacts',
+        'login',
     )
 
     REQUIRED_FIELDS = (
         'contacts',
+        'login',
     )
 
     def __init__(self, name='', image='', contacts=None):
