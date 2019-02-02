@@ -3,8 +3,8 @@ import functools
 import json
 import flask
 
-from .exceptions import ValidationError
-from .models import *
+from exceptions import ValidationError
+from models import *
 
 
 app = flask.Flask(__name__)
@@ -64,8 +64,8 @@ def handle_retrieve_user(name):
     """
     Returns account with given name.
     """
-    file = open(f'{name}.json', 'r')
-    return file.read()
+    with open(f'{name}.json', 'r') as file:
+        return file.read()
 
 
 @app.route('/new/room', methods=('POST',))

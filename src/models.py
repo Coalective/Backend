@@ -1,7 +1,7 @@
 import os
 import json
 
-from .exceptions import ValidationError
+from exceptions import ValidationError
 
 
 __all__ = ('Account', 'User', 'Room', 'MailingList')
