@@ -67,16 +67,17 @@ class Account(dict):
                 raise ValidationError(f'Field "{key}" is not allowed.')
 
     @classmethod
-    def check_user_input_name(cls, deserialized_json):
+    def validate_unique_login(cls, deserialized_json):
         # Check if user try to create existing one.
-        name = deserialized_json['name']
-        if os.path.exists(f'{name}.json'):
-            raise ValidationError(f'User "{name}" already exists.')
+        login = deserialized_json['login']
+        if os.path.exists(f'{login}.json'):
+            raise ValidationError(f'{cls.__name__} "{login}" already exists.')
 
     @classmethod
     def from_valid_dict(cls, valid_dict):
         return cls(
             name=valid_dict.get('name'),
+            login=valid_dict.get('login'),
             account_type=valid_dict.get('type'),
             contacts=valid_dict.get('contacts'),
             image=valid_dict.get('image'),
@@ -96,7 +97,7 @@ class Account(dict):
 
         cls.check_user_input_keys(deserialized_json)
 
-        cls.check_user_input_name(deserialized_json)
+        cls.validate_unique_login(deserialized_json)
 
         return cls.from_valid_dict(deserialized_json)
 
@@ -142,8 +143,8 @@ class Room(Account):
         'login',
     )
 
-    def __init__(self, name, image='', contacts=None):
-        super().__init__(name, account_type='2', image=image, contacts=contacts)
+    def __init__(self, name, login, image='', contacts=None):
+        super().__init__(name, login, account_type='2', image=image, contacts=contacts)
 
 
 class MailingList(Account):
@@ -160,14 +161,14 @@ class MailingList(Account):
         'login',
     )
 
-    def __init__(self, name='', image='', contacts=None):
+    def __init__(self, login, name='', image='', contacts=None):
         if not contacts:
             raise ValidationError(f'Invalid contacts value: {contacts}')
 
         if not name:
             name = 'no_name'
 
-        super().__init__(name, account_type='3', image=image, contacts=contacts)
+        super().__init__(name, login, account_type='3', image=image, contacts=contacts)
 
     @classmethod
     def from_valid_dict(cls, valid_dict):
