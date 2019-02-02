@@ -1,4 +1,5 @@
 # coding: utf-8
+import functools
 import json
 import os
 import flask
@@ -7,6 +8,7 @@ app = flask.Flask(__name__)
 
 
 def json_response(fn):
+    @functools.wraps(fn)
     def _wrapper(*args, **kwargs):
         try:
             response_data = fn(*args, **kwargs)
@@ -160,10 +162,55 @@ class User(Account):
             image=valid_dict.get('image'),
         )
 
+class Room(Account):
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+    )
+
+    REQUIRED_FIELDS = (
+        'name',
+    )
+
+    def __init__(self, name, image='', contacts=None):
+        super().__init__(name, account_type='2', image=image, contacts=contacts)
+
+
+class MailingList(Account):
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+    )
+
+    REQUIRED_FIELDS = (
+        'contacts',
+    )
+
+    def __init__(self, name='', image='', contacts=None):
+        if not contacts:
+            raise ValidationError(f'Invalid contacts value: {contacts}')
+
+        if not name:
+            name = 'no_name'
+
+        super().__init__(name, account_type='3', image=image, contacts=contacts)
+
+    @classmethod
+    def from_valid_dict(cls, valid_dict):
+        return cls(
+            name=valid_dict.get('name'),
+            contacts=valid_dict.get('contacts'),
+            image=valid_dict.get('image')
+        )
+
 
 @app.route('/new/user', methods=('POST', ))
 @json_response
-def handle_create_account():
+def handle_create_user():
     """
     Creates new account.
     """
@@ -176,12 +223,24 @@ def handle_create_account():
 
 @app.route('/accounts/<string:name>', methods=('GET', ))
 @search_file
-def handle_retrieve_account(name):
+def handle_retrieve_user(name):
     """
     Returns account with given name.
     """
     file = open(f'{name}.json', 'r')
     return file.read()
+
+
+@app.route('/new/room', methods=('POST',))
+@json_response
+def handle_create_room():
+    return Room.from_json(flask.request.data).__dict__
+
+
+@app.route('/new/mailing_list', methods=('POST', ))
+@json_response
+def handle_create_mailing_list():
+    return MailingList.from_json(flask.request.data).__dict__
 
 
 if __name__ == '__main__':
