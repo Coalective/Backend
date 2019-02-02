@@ -31,14 +31,24 @@ def json_response(fn):
 def search_file(fn):
     def wrapper(*args, **kwargs):
         try:
-            user_data = fn(*args, **kwargs)
+            account = Account.from_json(
+                fn(*args, **kwargs)
+            )
+        except FileNotFoundError:
             return flask.Response(
-                response=user_data,
+                response=json.dumps({'error': f'Account does not exist'}),
+                status=404,
+                mimetype='application/json',
+            )
+
+        try:
+            return flask.Response(
+                response=json.dumps(account),
                 mimetype='application/json',
             )
         except FileNotFoundError:
             return flask.Response(
-                response=json.dumps({'error': 'User does not exist'}),
+                response=json.dumps({'error': f'Account{account.login}does not exist'}),
                 status=404,
                 mimetype='application/json',
             )
@@ -51,20 +61,19 @@ def handle_create_user():
     """
     Creates new account.
     """
-    user_data_json = User.from_json(flask.request.data).__dict__
-    name = user_data_json['name']
-    with open(f'{name}.json', 'w') as file:
-        file.write(json.dumps(user_data_json))
-    return user_data_json
+    user = User.from_json(flask.request.data)
+    with open(f'{user.login}.json', 'w') as file:
+        file.write(json.dumps(user.to_dict()))
+    return user.to_dict()
 
 
-@app.route('/accounts/<string:name>', methods=('GET', ))
+@app.route('/accounts/<login>', methods=('GET',))
 @search_file
-def handle_retrieve_user(name):
+def handle_retrieve_user(login):
     """
     Returns account with given name.
     """
-    with open(f'{name}.json', 'r') as file:
+    with open(f'{login}.json', 'r') as file:
         return file.read()
 
 

@@ -101,6 +101,12 @@ class Account(dict):
 
         return cls.from_valid_dict(deserialized_json)
 
+    def to_dict(self):
+        return {
+            field: getattr(self, field)
+            for field in self.FIELDS
+        }
+
 
 class User(Account):
 
