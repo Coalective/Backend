@@ -1,6 +1,6 @@
 # coding: utf-8
 import json
-
+import os
 import flask
 
 app = flask.Flask(__name__)
@@ -21,6 +21,23 @@ def json_response(fn):
                 mimetype='application/json',
             )
     return _wrapper
+
+
+def search_file(fn):
+    def wrapper(*args, **kwargs):
+        try:
+            user_data = fn(*args, **kwargs)
+            return flask.Response(
+                response=user_data,
+                mimetype='application/json',
+            )
+        except FileNotFoundError:
+            return flask.Response(
+                response=json.dumps({'error': 'User does not exist'}),
+                status=404,
+                mimetype='application/json',
+            )
+    return wrapper
 
 
 class ValidationError(ValueError):
@@ -86,6 +103,13 @@ class Account(dict):
                 raise ValidationError(f'Field "{key}" is not allowed.')
 
     @classmethod
+    def check_user_input_name(cls, deserialized_json):
+        # Check if user try to create existing one.
+        name = deserialized_json['name']
+        if os.path.exists(f'{name}.json'):
+            raise ValidationError(f'User "{name}" already exists.')
+
+    @classmethod
     def from_valid_dict(cls, valid_dict):
         return cls(
             name=valid_dict.get('name'),
@@ -107,6 +131,8 @@ class Account(dict):
         cls.check_user_input_type(deserialized_json)
 
         cls.check_user_input_keys(deserialized_json)
+
+        cls.check_user_input_name(deserialized_json)
 
         return cls.from_valid_dict(deserialized_json)
 
@@ -141,16 +167,21 @@ def handle_create_account():
     """
     Creates new account.
     """
-    return User.from_json(flask.request.data).__dict__
+    user_data_json = User.from_json(flask.request.data).__dict__
+    name = user_data_json['name']
+    with open(f'{name}.json', 'w') as file:
+        file.write(json.dumps(user_data_json))
+    return user_data_json
 
 
-@app.route('/accounts/<string:account_id>', methods=('GET', ))
-def handle_retrieve_account(account_id):
+@app.route('/accounts/<string:name>', methods=('GET', ))
+@search_file
+def handle_retrieve_account(name):
     """
-    Returns account with given ID.
+    Returns account with given name.
     """
-    a = User(account_id)
-    return flask.Response(json.dumps(a.__dict__))
+    file = open(f'{name}.json', 'r')
+    return file.read()
 
 
 if __name__ == '__main__':
