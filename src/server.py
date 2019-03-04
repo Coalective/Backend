@@ -1,7 +1,11 @@
 # coding: utf-8
 import functools
 import json
+import os
+
 import flask
+import argparse
+import yaml
 
 from exceptions import ValidationError
 from models import *
@@ -28,27 +32,19 @@ def json_response(fn):
     return _wrapper
 
 
-def search_file(fn):
-    def wrapper(*args, **kwargs):
+def search_account(fn):
+    def wrapper(login):
         try:
             account = Account.from_json(
-                fn(*args, **kwargs)
+                fn(login)
             )
-        except FileNotFoundError:
-            return flask.Response(
-                response=json.dumps({'error': f'Account does not exist'}),
-                status=404,
-                mimetype='application/json',
-            )
-
-        try:
             return flask.Response(
                 response=json.dumps(account),
                 mimetype='application/json',
             )
         except FileNotFoundError:
             return flask.Response(
-                response=json.dumps({'error': f'Account{account.login}does not exist'}),
+                response=json.dumps({'error': f'Account "{login}" does not exist'}),
                 status=404,
                 mimetype='application/json',
             )
@@ -62,18 +58,18 @@ def handle_create_user():
     Creates new account.
     """
     user = User.from_json(flask.request.data)
-    with open(f'{user.login}.json', 'w') as file:
+    with open(os.path.join(app.config['COALECTIVE']['data_dir'], f'{user.login}.json'), 'w') as file:
         file.write(json.dumps(user.to_dict()))
     return user.to_dict()
 
 
 @app.route('/accounts/<login>', methods=('GET',))
-@search_file
+@search_account
 def handle_retrieve_user(login):
     """
     Returns account with given name.
     """
-    with open(f'{login}.json', 'r') as file:
+    with open(os.path.join(app.config['COALECTIVE']['data_dir'], f'{login}.json'), 'r') as file:
         return file.read()
 
 
@@ -90,4 +86,35 @@ def handle_create_mailing_list():
 
 
 if __name__ == '__main__':
+
+    DEFAULT_CONFIG = {
+        'fmt': 'json',
+    }
+
+    CONFIG_FIELDS = (
+        'data_dir',
+        'fmt',
+    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', required=True)
+    args = parser.parse_args()
+    with open(args.config) as f:
+        config = {
+            **DEFAULT_CONFIG,
+            **yaml.load(f.read()),
+        }
+
+    for k in config:
+        if k not in CONFIG_FIELDS:
+            print(f'Config {k} not expected, ignoring')
+
+    if not os.path.isdir(config['data_dir']):
+        raise RuntimeError(f'{config["data_dir"]} is not a directory')
+    if not os.access(config['data_dir'], os.W_OK):
+        raise RuntimeError(f'{config["data_dir"]} is not writeable')
+    if config['fmt'] not in ('xml', 'json'):
+        raise RuntimeError(f'{config["fmt"]} is unexpected format')
+
+    app.config['COALECTIVE'] = config
+    print(config)
     app.run(host='localhost', port=8080, debug=True)

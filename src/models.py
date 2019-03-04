@@ -10,7 +10,7 @@ __all__ = ('Account', 'User', 'Room', 'MailingList')
 class Account(dict):
     name: str
 
-    FIELDS = (
+    ALLOWED_FIELDS = (
         'name',
         'type',
         'image',
@@ -21,6 +21,14 @@ class Account(dict):
     REQUIRED_FIELDS = (
         'name',
         'type',
+        'login',
+    )
+
+    FIELDS = (
+        'name',
+        'type',
+        'image',
+        'contacts',
         'login',
     )
 
@@ -63,7 +71,7 @@ class Account(dict):
 
         # Check if all the fields are allowed.
         for key in deserialized_json:
-            if key not in cls.FIELDS:
+            if key not in cls.ALLOWED_FIELDS:
                 raise ValidationError(f'Field "{key}" is not allowed.')
 
     @classmethod
@@ -110,7 +118,7 @@ class Account(dict):
 
 class User(Account):
 
-    FIELDS = (
+    ALLOWED_FIELDS = (
         'name',
         'image',
         'contacts',
@@ -120,6 +128,14 @@ class User(Account):
     REQUIRED_FIELDS = (
         'name',
         'login',
+    )
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+        'login',
+        'type',
     )
 
     def __init__(self, name, login, image='', contacts=None):
@@ -137,7 +153,7 @@ class User(Account):
 
 class Room(Account):
 
-    FIELDS = (
+    ALLOWED_FIELDS = (
         'name',
         'image',
         'contacts',
@@ -147,6 +163,14 @@ class Room(Account):
     REQUIRED_FIELDS = (
         'name',
         'login',
+    )
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+        'login',
+        'type',
     )
 
     def __init__(self, name, login, image='', contacts=None):
@@ -155,7 +179,7 @@ class Room(Account):
 
 class MailingList(Account):
 
-    FIELDS = (
+    ALLOWED_FIELDS = (
         'name',
         'image',
         'contacts',
@@ -165,6 +189,14 @@ class MailingList(Account):
     REQUIRED_FIELDS = (
         'contacts',
         'login',
+    )
+
+    FIELDS = (
+        'name',
+        'image',
+        'contacts',
+        'login',
+        'type',
     )
 
     def __init__(self, login, name='', image='', contacts=None):
@@ -180,6 +212,7 @@ class MailingList(Account):
     def from_valid_dict(cls, valid_dict):
         return cls(
             name=valid_dict.get('name'),
+            login=valid_dict.get('login'),
             contacts=valid_dict.get('contacts'),
             image=valid_dict.get('image')
         )
